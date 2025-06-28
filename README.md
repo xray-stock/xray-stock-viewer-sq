@@ -1,46 +1,97 @@
-# Getting Started with Create React App
+# 📈 stock-viewer-app
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## 1. 프로젝트 개요
 
-## Available Scripts
+**stock-viewer-app**은 실시간 주식 데이터 시각화 및 모니터링을 위한 프론트엔드 애플리케이션입니다. React(TypeScript) 기반으로 개발되었으며, 실시간 소켓 통신 및 JWT 인증 등 다양한 기능을 제공합니다.
 
-In the project directory, you can run:
+> 본 프로젝트는 테스트, 데모, 실거래 아키텍처 구성 연습 목적이며, 실시간 데이터 처리 및 다양한 백엔드 연동을 지원할 수 있도록 설계되었습니다.
 
-### `npm start`
+---
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+## 2. 시스템 구조 및 주요 기능
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+- **실시간 소켓 통신**
+  - socket.io를 활용한 실시간 데이터 수신 및 상태 관리
+- **JWT 인증/생성**
+  - JWTGenerator를 통한 토큰 생성 및 인증 테스트
+- **룸/채널 관리**
+  - RoomManager를 통한 실시간 채널(룸) 입장/퇴장 및 상태 표시
+- **UI/UX**
+  - Material-UI 등 최신 UI 라이브러리 적용(적용 중)
+- **확장성**
+  - 다양한 백엔드 API 연동 및 실시간 데이터 시각화 기능 확장 가능
 
-### `npm test`
+---
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## 3. 폴더 구조
 
-### `npm run build`
+```
+stock-viewer-app/
+├── public/                # 정적 파일 및 HTML 템플릿
+├── src/                   # 소스코드 (React + TypeScript)
+│   ├── App.tsx            # 메인 앱 컴포넌트
+│   ├── index.tsx          # 엔트리 포인트
+│   ├── RoomManager.tsx    # 룸/채널 관리
+│   ├── SocketConnectionPanel.tsx # 소켓 연결 패널
+│   ├── JWTGenerator.tsx   # JWT 생성/테스트
+│   └── ...                # 기타 컴포넌트 및 타입 정의
+├── package.json           # 프로젝트 메타/의존성
+├── tsconfig.json          # TypeScript 설정
+└── README.md              # 프로젝트 설명
+```
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+---
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## 4. 환경 변수 및 설정
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+- **아직 미정**
 
-### `npm run eject`
+---
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+## 5. 실행 방법
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+1. 의존성 설치
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+   ```bash
+   npm install
+   ```
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+2. 개발 서버 실행
 
-## Learn More
+   ```bash
+   npm start
+   ```
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+3. (선택) 빌드
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+   ```bash
+   npm run build
+   ```
+
+---
+
+## 6. 주요 스크립트/명령어
+
+| 명령어            | 설명                       |
+|-------------------|----------------------------|
+| npm start         | 개발 서버 실행              |
+| npm run build     | 프로덕션 빌드 생성          |
+| npm test          | 테스트 실행 (구현 시)        |
+| npm run lint      | 린트 검사 (구현 시)          |
+
+---
+
+## 7. 기술 스택
+
+- React (TypeScript)
+- socket.io-client
+- Material-UI (적용 중)
+- 기타: JWT, WebSocket 등
+
+---
+
+## 8. 참고 및 기타
+
+- 본 프로젝트는 프론트엔드 실시간 데이터 시각화 및 실습용으로 설계되었습니다.
+- 백엔드 연동, 인증, 실거래 환경 등은 별도 구현이 필요할 수 있습니다.
+- 문의/기여/이슈는 GitHub를 통해 남겨주세요.
