@@ -37,7 +37,20 @@ const CandleChart: React.FC<CandleChartProps> = ({ data, width = 600, height = 3
     // SVG 초기화
     const svg = d3.select(svgRef.current);
     svg.selectAll('*').remove();
+
+    // clipPath 정의 (차트 내부만 보이게)
+    svg.append('defs')
+      .append('clipPath')
+      .attr('id', 'clip')
+      .append('rect')
+      .attr('x', 0)
+      .attr('y', 0)
+      .attr('width', w)
+      .attr('height', h);
+
     const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+    // chartArea 그룹에 clip-path 적용
+    const chartArea = g.append('g').attr('clip-path', 'url(#clip)');
 
     // X, Y 스케일
     const x = d3
@@ -66,8 +79,8 @@ const CandleChart: React.FC<CandleChartProps> = ({ data, width = 600, height = 3
     }
     tooltip.style('position', 'absolute').style('pointer-events', 'none').style('display', 'none').style('background', '#fff').style('border', '1px solid #aaa').style('padding', '6px 10px').style('border-radius', '6px').style('font-size', '13px').style('z-index', 1000);
 
-    // 십자선 그룹
-    const crosshair = g.append('g').style('display', 'none');
+    // 십자선 그룹 (chartArea 내부에)
+    const crosshair = chartArea.append('g').style('display', 'none');
     const vLine = crosshair.append('line').attr('stroke', '#888').attr('stroke-dasharray', '3 2');
     const hLine = crosshair.append('line').attr('stroke', '#888').attr('stroke-dasharray', '3 2');
 
@@ -94,10 +107,10 @@ const CandleChart: React.FC<CandleChartProps> = ({ data, width = 600, height = 3
       const gap = fullWidth * (1 - BAND_RATIO);
 
       // 기존 봉 삭제
-      g.selectAll('g.candle').remove();
+      chartArea.selectAll('g.candle').remove();
 
       // 봉 다시 그림
-      const candleGroups = g.selectAll('g.candle')
+      const candleGroups = chartArea.selectAll('g.candle')
         .data(data)
         .enter()
         .append('g')
