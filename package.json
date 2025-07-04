@@ -9,9 +9,8 @@
     "@testing-library/user-event": "^13.5.0",
     "@types/jest": "^27.5.2",
     "@types/node": "^16.18.126",
-    "@types/react": "^19.1.8",
-    "@types/react-dom": "^19.1.6",
     "chart.js": "^4.5.0",
+    "d3": "^7.9.0",
     "jose": "^6.0.11",
     "jsrsasign": "^11.1.0",
     "react": "^19.1.0",
@@ -46,5 +45,10 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "@types/d3": "^7.4.3",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6"
   }
 }

@@ -1,10 +1,7 @@
 import React, { useState } from 'react';
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
-import { Bar } from 'react-chartjs-2';
+import CandleChart, { CandleData } from './CandleChart';
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
-
-const mockCandleData = [
+const mockCandleData: CandleData[] = [
   { time: '09:00', open: 100, high: 110, low: 95, close: 105 },
   { time: '09:05', open: 105, high: 115, low: 104, close: 110 },
   { time: '09:10', open: 110, high: 112, low: 108, close: 109 },
@@ -22,7 +19,7 @@ type TradeTick = {
 
 const CandleChartPage: React.FC = () => {
   const [symbol, setSymbol] = useState('KOSPI::005930');
-  const [candleData, setCandleData] = useState(mockCandleData);
+  const [candleData, setCandleData] = useState<CandleData[]>(mockCandleData);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -61,29 +58,8 @@ const CandleChartPage: React.FC = () => {
   };
 
   // Chart.js용 데이터 변환 (Bar 차트로 임시 표현)
-  const chartData = {
-    labels: candleData.map(d => d.time),
-    datasets: [
-      {
-        label: '시가',
-        data: candleData.map(d => d.open),
-        backgroundColor: 'rgba(255, 99, 132, 0.5)',
-      },
-      {
-        label: '종가',
-        data: candleData.map(d => d.close),
-        backgroundColor: 'rgba(54, 162, 235, 0.5)',
-      },
-    ],
-  };
-
-  const chartOptions = {
-    responsive: true,
-    plugins: {
-      legend: { position: 'top' as const },
-      title: { display: true, text: `${symbol} 캔들 차트` },
-    },
-  };
+  // const chartData = { ... }
+  // const chartOptions = { ... }
 
   return (
     <div>
@@ -93,7 +69,7 @@ const CandleChartPage: React.FC = () => {
         <input
           type="text"
           value={symbol}
-          onChange={e => setSymbol(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSymbol(e.target.value)}
           style={{ marginRight: 8 }}
         />
         <button onClick={fetchCandleData} disabled={loading}>{loading ? '조회 중...' : '조회'}</button>
@@ -101,7 +77,7 @@ const CandleChartPage: React.FC = () => {
       {error && <div style={{ color: 'red', marginBottom: 8 }}>{error}</div>}
       <div style={{ height: 400, background: '#f5f5f5', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ width: '100%', height: 350 }}>
-          <Bar data={chartData} options={chartOptions} />
+          <CandleChart data={candleData} width={600} height={350} />
         </div>
       </div>
     </div>
