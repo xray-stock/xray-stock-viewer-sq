@@ -1,12 +1,31 @@
 import React, { useState } from 'react';
 import CandleChart, { CandleData } from './CandleChart';
 
-const mockCandleData: CandleData[] = [
-  { time: '09:00', open: 100, high: 110, low: 95, close: 105 },
-  { time: '09:05', open: 105, high: 115, low: 104, close: 110 },
-  { time: '09:10', open: 110, high: 112, low: 108, close: 109 },
-  { time: '09:15', open: 109, high: 113, low: 107, close: 112 },
-];
+// 200개 이상의 랜덤 캔들 데이터 생성
+function generateRandomCandleData(count: number): CandleData[] {
+  const data: CandleData[] = [];
+  let prevClose = 100;
+  for (let i = 0; i < count; i++) {
+    const hour = 9 + Math.floor((i + 0) / 60);
+    const min = (i % 60).toString().padStart(2, '0');
+    const time = `${hour}:${min}`;
+    const open = prevClose + (Math.random() - 0.5) * 4;
+    const high = open + Math.random() * 4;
+    const low = open - Math.random() * 4;
+    const close = low + Math.random() * (high - low);
+    data.push({
+      time,
+      open: Math.round(open * 100) / 100,
+      high: Math.round(high * 100) / 100,
+      low: Math.round(low * 100) / 100,
+      close: Math.round(close * 100) / 100,
+    });
+    prevClose = close;
+  }
+  return data;
+}
+
+const mockCandleData: CandleData[] = generateRandomCandleData(240);
 
 // API 응답 타입 예시 (실제 응답 구조에 맞게 수정 필요)
 type TradeTick = {
