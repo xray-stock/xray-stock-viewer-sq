@@ -106,13 +106,13 @@ const CandleChartPage: React.FC<CandleChartPageProps> = ({ jwt }) => {
       msg.tradeTickItems.forEach((tick: any) => {
         const tickKey = getCandleTimeKey(tick.tickAt, interval);
         if (!tickKey || typeof tick.price !== 'number' || isNaN(tick.price) || typeof tick.volume !== 'number' || isNaN(tick.volume)) return;
-        const last = updated[updated.length - 1];
-        if (last && last.time === tickKey) {
-          // 기존 봉 갱신
-          last.high = Math.max(last.high, tick.price);
-          last.low = Math.min(last.low, tick.price);
-          last.close = tick.price;
-          last.volume += tick.volume;
+        // 기존 봉을 time(key)로 전체에서 탐색
+        const found = updated.find(c => c.time === tickKey);
+        if (found) {
+          found.high = Math.max(found.high, tick.price);
+          found.low = Math.min(found.low, tick.price);
+          found.close = tick.price;
+          found.volume += tick.volume;
         } else {
           // 새 봉 추가
           updated.push({
