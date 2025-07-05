@@ -1,17 +1,9 @@
 import React, { useState } from 'react';
 import CandleChart, { CandleData } from './CandleChart';
-import { generateRandomCandleData } from './utils';
+import { StockApiClient } from './api/StockApiClient';
+import type { Candle, CandleResponse } from './types/stock';
 
-const mockCandleData: CandleData[] = []; // = generateRandomCandleData(240);
-
-// API 응답 타입 예시 (실제 응답 구조에 맞게 수정 필요)
-type TradeTick = {
-  at: string; // 시간
-  open: number;
-  high: number;
-  low: number;
-  close: number;
-};
+const mockCandleData: CandleData[] = [];
 
 const CandleChartPage: React.FC = () => {
   const [symbol, setSymbol] = useState('KOSPI::005930');
@@ -27,19 +19,15 @@ const CandleChartPage: React.FC = () => {
   // interval 상태 추가
   const [interval, setInterval] = useState('1m');
 
-  // 실제 API 연동
+  const apiClient = new StockApiClient();
   const fetchCandleData = async () => {
     setLoading(true);
     setError(null);
     try {
-      let url = `http://localhost:8081/api/v1/stocks/${symbol}/candles?interval=${interval}`;
-      if (startDate) url += `&start=${new Date(startDate).toISOString()}`;
-      if (endDate) url += `&end=${new Date(endDate).toISOString()}`;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error('API 요청 실패');
-      const data = await res.json();
-      const candles = data.candles || [];
-      const chartData = candles.map((item: any) => ({
+      const start = startDate ? new Date(startDate).toISOString() : undefined;
+      const end = endDate ? new Date(endDate).toISOString() : undefined;
+      const data: CandleResponse = await apiClient.getCandles(symbol, interval, start, end);
+      const chartData: CandleData[] = (data.candles || []).map((item: Candle) => ({
         time: item.at.slice(11, 16), // HH:mm
         open: item.open,
         high: item.high,
