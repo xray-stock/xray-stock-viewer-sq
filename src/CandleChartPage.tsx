@@ -6,14 +6,15 @@ import type { Candle, CandleResponse } from './types/stock';
 const mockCandleData: CandleData[] = [];
 
 const CandleChartPage: React.FC = () => {
-  const [symbol, setSymbol] = useState('KOSPI::005930');
+  const [symbol, setSymbol] = useState('KOSPI::A005930');
   const [candleData, setCandleData] = useState<CandleData[]>(mockCandleData);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // 날짜 범위 상태 추가
   const now = new Date();
-  const defaultEnd = now.toISOString().slice(0, 16); // yyyy-MM-ddTHH:mm
-  const defaultStart = new Date(now.getTime() - 30 * 60 * 1000).toISOString().slice(0, 16);
+  const defaultEnd = now.toLocaleString('sv-SE').slice(0, 16); // yyyy-MM-ddTHH:mm (로컬 시간)
+  const defaultStart = new Date(now.getTime() - 30 * 60 * 1000).toLocaleString('sv-SE').slice(0, 16);
+
   const [startDate, setStartDate] = useState(defaultStart);
   const [endDate, setEndDate] = useState(defaultEnd);
   // interval 상태 추가
