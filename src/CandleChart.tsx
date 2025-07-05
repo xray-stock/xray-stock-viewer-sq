@@ -17,6 +17,7 @@ interface CandleChartProps {
   width?: number;
   height?: number;
   intervalFormat?: string;
+  animateInitial?: boolean;
 }
 
 const CANDLE_PADDING = 5; // 좌우 패딩 캔들 개수
@@ -41,7 +42,7 @@ function formatLabel(time: string, format: string) {
   return time;
 }
 
-const CandleChart: React.FC<CandleChartProps> = ({ data, width = 600, height = 350, intervalFormat }) => {
+const CandleChart: React.FC<CandleChartProps> = ({ data, width = 600, height = 350, intervalFormat, animateInitial = false }) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const tooltipRef = useRef<HTMLDivElement | null>(null);
   const prevDataLen = useRef<number>(0);
@@ -168,23 +169,45 @@ const CandleChart: React.FC<CandleChartProps> = ({ data, width = 600, height = 3
               .attr('class', 'candle')
               .attr('transform', (_: CandleData, i: number) => `translate(${zx(i) + gap / 2},0)`);
             // 꼬리
-            g.append('line')
+            const line = g.append('line')
               .attr('x1', bandWidth / 2)
               .attr('x2', bandWidth / 2)
-              .attr('y1', (d: CandleData) => y(d.high))
-              .attr('y2', (d: CandleData) => y(d.low))
               .attr('stroke', 'black');
             // 몸통
-            g.append('rect')
+            const rect = g.append('rect')
               .attr('x', 0)
-              .attr('y', (d: CandleData) => y(Math.max(d.open, d.close)))
               .attr('width', bandWidth)
-              .attr('height', (d: CandleData) => {
-                const h = Math.abs(y(d.open) - y(d.close));
-                return h === 0 ? 1 : h;
-              })
               .attr('fill', (d: CandleData) => d.close >= d.open ? COLOR_UP : COLOR_DOWN)
               .attr('stroke', 'black');
+            if (animateInitial) {
+              line
+                .attr('y1', (d: CandleData) => y(d.close))
+                .attr('y2', (d: CandleData) => y(d.close))
+                .transition()
+                .duration(600)
+                .attr('y1', (d: CandleData) => y(d.high))
+                .attr('y2', (d: CandleData) => y(d.low));
+              rect
+                .attr('y', (d: CandleData) => y(d.close))
+                .attr('height', 1)
+                .transition()
+                .duration(600)
+                .attr('y', (d: CandleData) => y(Math.max(d.open, d.close)))
+                .attr('height', (d: CandleData) => {
+                  const h = Math.abs(y(d.open) - y(d.close));
+                  return h === 0 ? 1 : h;
+                });
+            } else {
+              line
+                .attr('y1', (d: CandleData) => y(d.high))
+                .attr('y2', (d: CandleData) => y(d.low));
+              rect
+                .attr('y', (d: CandleData) => y(Math.max(d.open, d.close)))
+                .attr('height', (d: CandleData) => {
+                  const h = Math.abs(y(d.open) - y(d.close));
+                  return h === 0 ? 1 : h;
+                });
+            }
             return g;
           },
           (update: any) => {
@@ -317,7 +340,7 @@ const CandleChart: React.FC<CandleChartProps> = ({ data, width = 600, height = 3
     return () => {
       tooltip.remove();
     };
-  }, [data, width, height, intervalFormat]);
+  }, [data, width, height, intervalFormat, animateInitial]);
 
   return (
     <>

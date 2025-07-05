@@ -32,6 +32,7 @@ const CandleChartPage: React.FC<CandleChartPageProps> = ({ jwt }) => {
   const [startDate, setStartDate] = useState(defaultStart);
   const [endDate, setEndDate] = useState(defaultEnd);
   const [interval, setInterval] = useState(defaultInterval);
+  const [animateInitial, setAnimateInitial] = useState(false);
 
   const apiClient = new StockApiClient();
   // 봉 구간 Key 생성 함수
@@ -53,6 +54,7 @@ const CandleChartPage: React.FC<CandleChartPageProps> = ({ jwt }) => {
     return date.toISOString().slice(0, 16); // YYYY-MM-DDTHH:MM
   }
   const fetchCandleData = async () => {
+    setAnimateInitial(true);
     setLoading(true);
     setError(null);
     try {
@@ -165,6 +167,13 @@ const CandleChartPage: React.FC<CandleChartPageProps> = ({ jwt }) => {
   // const chartData = { ... }
   // const chartOptions = { ... }
 
+  useEffect(() => {
+    if (animateInitial) {
+      const timer = setTimeout(() => setAnimateInitial(false), 700);
+      return () => clearTimeout(timer);
+    }
+  }, [animateInitial]);
+
   return (
     <div>
       <h2>캔들 차트</h2>
@@ -206,7 +215,7 @@ const CandleChartPage: React.FC<CandleChartPageProps> = ({ jwt }) => {
       {error && <div style={{ color: 'red', marginBottom: 8 }}>{error}</div>}
       <div style={{ height: 400, background: '#f5f5f5', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ width: '100%', height: 350 }}>
-          <CandleChart data={candleData} width={600} height={350} intervalFormat={getIntervalOption(interval).format} />
+          <CandleChart data={candleData} width={600} height={350} intervalFormat={getIntervalOption(interval).format} animateInitial={animateInitial} />
         </div>
       </div>
     </div>
