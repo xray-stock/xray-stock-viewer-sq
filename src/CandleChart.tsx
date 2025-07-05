@@ -73,7 +73,7 @@ const CandleChart: React.FC<CandleChartProps> = ({ data, width = 600, height = 3
     const yAxis = g.append('g').call(d3.axisLeft(y));
 
     // 툴팁 div 생성
-    let tooltip = d3.select(tooltipRef.current);
+    let tooltip = d3.select('.candle-tooltip');
     if (tooltip.empty()) {
       tooltip = d3.select('body').append('div').attr('class', 'candle-tooltip');
     }
