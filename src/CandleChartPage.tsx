@@ -1,31 +1,8 @@
 import React, { useState } from 'react';
 import CandleChart, { CandleData } from './CandleChart';
+import { generateRandomCandleData } from './utils';
 
-// 200개 이상의 랜덤 캔들 데이터 생성
-function generateRandomCandleData(count: number): CandleData[] {
-  const data: CandleData[] = [];
-  let prevClose = 100;
-  for (let i = 0; i < count; i++) {
-    const hour = 9 + Math.floor((i + 0) / 60);
-    const min = (i % 60).toString().padStart(2, '0');
-    const time = `${hour}:${min}`;
-    const open = prevClose + (Math.random() - 0.5) * 4;
-    const high = open + Math.random() * 4;
-    const low = open - Math.random() * 4;
-    const close = low + Math.random() * (high - low);
-    data.push({
-      time,
-      open: Math.round(open * 100) / 100,
-      high: Math.round(high * 100) / 100,
-      low: Math.round(low * 100) / 100,
-      close: Math.round(close * 100) / 100,
-    });
-    prevClose = close;
-  }
-  return data;
-}
-
-const mockCandleData: CandleData[] = generateRandomCandleData(240);
+const mockCandleData: CandleData[] = []; // = generateRandomCandleData(240);
 
 // API 응답 타입 예시 (실제 응답 구조에 맞게 수정 필요)
 type TradeTick = {
@@ -41,26 +18,28 @@ const CandleChartPage: React.FC = () => {
   const [candleData, setCandleData] = useState<CandleData[]>(mockCandleData);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // 날짜 범위 상태 추가
+  const now = new Date();
+  const defaultEnd = now.toISOString().slice(0, 16); // yyyy-MM-ddTHH:mm
+  const defaultStart = new Date(now.getTime() - 30 * 60 * 1000).toISOString().slice(0, 16);
+  const [startDate, setStartDate] = useState(defaultStart);
+  const [endDate, setEndDate] = useState(defaultEnd);
+  // interval 상태 추가
+  const [interval, setInterval] = useState('1m');
 
   // 실제 API 연동
   const fetchCandleData = async () => {
     setLoading(true);
     setError(null);
     try {
-      // 날짜 범위 등은 임시로 최근 30분(예시)로 설정
-      const now = new Date();
-      const end = now.toISOString();
-      const start = new Date(now.getTime() - 30 * 60 * 1000).toISOString();
-      // 실제 서버 주소로 변경 필요 (프록시 사용 시 /api로 시작)
-      const url = `/api/v1/stocks/${encodeURIComponent(symbol)}/trade-ticks/range?start=${start}&end=${end}`;
+      let url = `http://localhost:8081/api/v1/stocks/${symbol}/candles?interval=${interval}`;
+      if (startDate) url += `&start=${new Date(startDate).toISOString()}`;
+      if (endDate) url += `&end=${new Date(endDate).toISOString()}`;
       const res = await fetch(url);
       if (!res.ok) throw new Error('API 요청 실패');
       const data = await res.json();
-      // data.items 또는 data.results 등 실제 응답 구조에 맞게 파싱 필요
-      // 여기서는 예시로 data.items 사용
-      const items: TradeTick[] = data.items || [];
-      // 차트용 데이터 변환
-      const chartData = items.map(item => ({
+      const candles = data.candles || [];
+      const chartData = candles.map((item: any) => ({
         time: item.at.slice(11, 16), // HH:mm
         open: item.open,
         high: item.high,
@@ -84,12 +63,32 @@ const CandleChartPage: React.FC = () => {
     <div>
       <h2>캔들 차트</h2>
       <div style={{ marginBottom: '1rem' }}>
-        <label>종목 코드: </label>
+        <label>종목 코드 (예: KOSPI::A005930): </label>
         <input
           type="text"
           value={symbol}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSymbol(e.target.value)}
           style={{ marginRight: 8 }}
+        />
+        <label style={{ marginLeft: 8 }}>간격:</label>
+        <select value={interval} onChange={e => setInterval(e.target.value)} style={{ marginLeft: 4, marginRight: 8 }}>
+          <option value="1m">1분</option>
+          <option value="5m">5분</option>
+          <option value="1d">일봉</option>
+        </select>
+        <label style={{ marginLeft: 8 }}>시작:</label>
+        <input
+          type="datetime-local"
+          value={startDate}
+          onChange={e => setStartDate(e.target.value)}
+          style={{ marginLeft: 4, marginRight: 8 }}
+        />
+        <label>종료:</label>
+        <input
+          type="datetime-local"
+          value={endDate}
+          onChange={e => setEndDate(e.target.value)}
+          style={{ marginLeft: 4, marginRight: 8 }}
         />
         <button onClick={fetchCandleData} disabled={loading}>{loading ? '조회 중...' : '조회'}</button>
       </div>

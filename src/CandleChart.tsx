@@ -26,7 +26,32 @@ const CandleChart: React.FC<CandleChartProps> = ({ data, width = 600, height = 3
   const tooltipRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (!data || data.length === 0) return;
+    if (!data || data.length === 0) {
+      // 데이터가 없을 때: 기본 축만 그림 + 메시지 표시
+      const svg = d3.select(svgRef.current);
+      svg.selectAll('*').remove();
+      const margin = { top: 20, right: 20, bottom: 30, left: 50 };
+      const w = width - margin.left - margin.right;
+      const h = height - margin.top - margin.bottom;
+      // X, Y 축 기본값
+      const x = d3.scaleBand().domain(['0']).range([0, w]);
+      const y = d3.scaleLinear().domain([0, 100]).range([h, 0]);
+      const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+      g.append('g')
+        .attr('transform', `translate(0,${h})`)
+        .call(d3.axisBottom(x).tickFormat(() => ''));
+      g.append('g').call(d3.axisLeft(y));
+      // 중앙 메시지
+      svg.append('text')
+        .attr('x', width / 2)
+        .attr('y', height / 2)
+        .attr('text-anchor', 'middle')
+        .attr('dominant-baseline', 'middle')
+        .attr('fill', '#888')
+        .attr('font-size', 18)
+        .text('데이터가 없습니다. 유효한 날짜 범위를 선택해 주세요.');
+      return;
+    }
     const margin = { top: 20, right: 20, bottom: 30, left: 50 };
     const w = width - margin.left - margin.right;
     const h = height - margin.top - margin.bottom;
