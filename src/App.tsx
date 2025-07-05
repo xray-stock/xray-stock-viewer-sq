@@ -25,7 +25,7 @@ function App() {
               <SocketConnectionPanel jwt={jwt} />
             </>
           } />
-          <Route path="/candle-chart" element={<CandleChartPage />} />
+          <Route path="/candle-chart" element={<CandleChartPage jwt={jwt} />} />
         </Routes>
       </div>
     </Router>

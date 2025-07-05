@@ -9,21 +9,43 @@ export type CandleData = {
   high: number;
   low: number;
   close: number;
+  volume?: number;
 };
 
 interface CandleChartProps {
   data: CandleData[];
   width?: number;
   height?: number;
+  intervalFormat?: string;
 }
 
 const CANDLE_PADDING = 5; // 좌우 패딩 캔들 개수
 const MIN_SCALE = 1;
 const MAX_SCALE = 10;
 
-const CandleChart: React.FC<CandleChartProps> = ({ data, width = 600, height = 350 }) => {
+// x축 라벨 포맷 함수
+function formatLabel(time: string, format: string) {
+  if (!time) return '';
+  const date = new Date(time);
+  if (isNaN(date.getTime())) return '';
+  if (format === 'HH:mm') {
+    const h = date.getHours().toString().padStart(2, '0');
+    const m = date.getMinutes().toString().padStart(2, '0');
+    return `${h}:${m}`;
+  }
+  if (format === 'MM-DD') {
+    const mon = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    return `${mon}-${day}`;
+  }
+  return time;
+}
+
+const CandleChart: React.FC<CandleChartProps> = ({ data, width = 600, height = 350, intervalFormat }) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const tooltipRef = useRef<HTMLDivElement | null>(null);
+  const prevDataLen = useRef<number>(0);
+  const transformRef = useRef<ZoomTransform>(d3.zoomIdentity);
 
   useEffect(() => {
     if (!data || data.length === 0) {
@@ -91,10 +113,16 @@ const CandleChart: React.FC<CandleChartProps> = ({ data, width = 600, height = 3
       ])
       .range([h, 0]);
 
-    // X, Y 축
     const xAxis = g.append('g')
       .attr('transform', `translate(0,${h})`)
-      .call(d3.axisBottom(x).tickFormat((d: string, i: number) => data[+d]?.time ?? ''));
+      .call(
+        d3.axisBottom(x)
+          .tickFormat((d: string, i: number) => {
+            const t = data[+d]?.time;
+            return formatLabel(t, intervalFormat || '');
+          })
+          .tickValues(x.domain())
+      );
     const yAxis = g.append('g').call(d3.axisLeft(y));
 
     // 툴팁 div 생성
@@ -119,7 +147,7 @@ const CandleChart: React.FC<CandleChartProps> = ({ data, width = 600, height = 3
     const COLOR_DOWN_HOVER = '#2471e3'; // 진한 파랑
 
     // 봉 그리기 함수 (transform 적용)
-    function drawCandles(transform: ZoomTransform = d3.zoomIdentity, animate = false) {
+    function drawCandles(transform: ZoomTransform = d3.zoomIdentity) {
       // x축 스케일을 transform에 맞게 변환
       const zx = transform.rescaleX(
         d3.scaleLinear()
@@ -131,52 +159,58 @@ const CandleChart: React.FC<CandleChartProps> = ({ data, width = 600, height = 3
       const bandWidth = fullWidth * BAND_RATIO;
       const gap = fullWidth * (1 - BAND_RATIO);
 
-      // 기존 봉 삭제
-      chartArea.selectAll('g.candle').remove();
-
-      // 봉 다시 그림
+      // 봉 join 패턴
       const candleGroups = chartArea.selectAll('g.candle')
-        .data(data)
-        .enter()
-        .append('g')
-        .attr('class', 'candle')
-        .attr('transform', (_: CandleData, i: number) => `translate(${zx(i) + gap / 2},0)`);
-
-      // 꼬리
-      const lines = candleGroups.append('line')
-        .attr('x1', bandWidth / 2)
-        .attr('x2', bandWidth / 2)
-        .attr('y1', (d: CandleData) => y(d.high))
-        .attr('y2', (d: CandleData) => y(d.low))
-        .attr('stroke', 'black');
-
-      // 몸통
-      const rects = candleGroups.append('rect')
-        .attr('x', 0)
-        .attr('y', (d: CandleData) => y(Math.max(d.open, d.close)))
-        .attr('width', bandWidth)
-        .attr('height', (d: CandleData) => Math.abs(y(d.open) - y(d.close)))
-        .attr('fill', (d: CandleData) => d.close >= d.open ? COLOR_UP : COLOR_DOWN)
-        .attr('stroke', 'black');
-
-      // 최초 렌더링 시에만 애니메이션 적용
-      if (animate) {
-        rects
-          .attr('height', 0)
-          .attr('y', (d: CandleData) => y(d.close))
-          .transition()
-          .duration(600)
-          .attr('y', (d: CandleData) => y(Math.max(d.open, d.close)))
-          .attr('height', (d: CandleData) => Math.abs(y(d.open) - y(d.close)));
-
-        lines
-          .attr('y1', (d: CandleData) => y(d.close))
-          .attr('y2', (d: CandleData) => y(d.close))
-          .transition()
-          .duration(600)
-          .attr('y1', (d: CandleData) => y(d.high))
-          .attr('y2', (d: CandleData) => y(d.low));
-      }
+        .data(data, (d: any) => d?.time)
+        .join(
+          (enter: any) => {
+            const g = enter.append('g')
+              .attr('class', 'candle')
+              .attr('transform', (_: CandleData, i: number) => `translate(${zx(i) + gap / 2},0)`);
+            // 꼬리
+            g.append('line')
+              .attr('x1', bandWidth / 2)
+              .attr('x2', bandWidth / 2)
+              .attr('y1', (d: CandleData) => y(d.high))
+              .attr('y2', (d: CandleData) => y(d.low))
+              .attr('stroke', 'black');
+            // 몸통
+            g.append('rect')
+              .attr('x', 0)
+              .attr('y', (d: CandleData) => y(Math.max(d.open, d.close)))
+              .attr('width', bandWidth)
+              .attr('height', (d: CandleData) => {
+                const h = Math.abs(y(d.open) - y(d.close));
+                return h === 0 ? 1 : h;
+              })
+              .attr('fill', (d: CandleData) => d.close >= d.open ? COLOR_UP : COLOR_DOWN)
+              .attr('stroke', 'black');
+            return g;
+          },
+          (update: any) => {
+            update.attr('transform', (_: CandleData, i: number) => `translate(${zx(i) + gap / 2},0)`);
+            // 꼬리
+            update.select('line')
+              .attr('x1', bandWidth / 2)
+              .attr('x2', bandWidth / 2)
+              .attr('y1', (d: CandleData) => y(d.high))
+              .attr('y2', (d: CandleData) => y(d.low))
+              .attr('stroke', 'black');
+            // 몸통
+            update.select('rect')
+              .attr('x', 0)
+              .attr('y', (d: CandleData) => y(Math.max(d.open, d.close)))
+              .attr('width', bandWidth)
+              .attr('height', (d: CandleData) => {
+                const h = Math.abs(y(d.open) - y(d.close));
+                return h === 0 ? 1 : h;
+              })
+              .attr('fill', (d: CandleData) => d.close >= d.open ? COLOR_UP : COLOR_DOWN)
+              .attr('stroke', 'black');
+            return update;
+          },
+          (exit: any) => exit.remove()
+        );
 
       // 마우스 오버 이벤트 (툴팁/십자선)
       candleGroups
@@ -198,7 +232,8 @@ const CandleChart: React.FC<CandleChartProps> = ({ data, width = 600, height = 3
             .style('left', `${event.pageX + 10}px`)
             .style('top', `${event.pageY - 30}px`)
             .html(
-              `<b>${d.time}</b><br/>시가: ${d.open}<br/>고가: ${d.high}<br/>저가: ${d.low}<br/>종가: ${d.close}`
+              `<b>${d.time}</b><br/>시가: ${d.open}<br/>고가: ${d.high}<br/>저가: ${d.low}<br/>종가: ${d.close}` +
+              (typeof (d as any).volume === 'number' ? `<br/>거래량: ${(d as any).volume}` : '')
             );
           // 마우스 오버 시 해당 봉 색상 진하게
           d3.select(this).select('rect')
@@ -230,8 +265,9 @@ const CandleChart: React.FC<CandleChartProps> = ({ data, width = 600, height = 3
         });
     }
 
-    // 최초 그리기 (애니메이션 적용)
-    drawCandles(undefined, true);
+    // 마지막 봉만 추가된 경우에만 애니메이션 적용 (이제 필요 없음)
+    drawCandles(transformRef.current);
+    prevDataLen.current = data.length;
 
     // 줌 이벤트 핸들러
     function zoomed(event: D3ZoomEvent<SVGSVGElement, unknown>) {
@@ -256,7 +292,8 @@ const CandleChart: React.FC<CandleChartProps> = ({ data, width = 600, height = 3
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           .tickFormat((d: any, i: any) => data[Math.floor(d as number)]?.time ?? '')
       );
-      drawCandles(clampedTransform, false);
+      transformRef.current = clampedTransform;
+      drawCandles(transformRef.current);
     }
 
     // 줌 동작 설정
@@ -280,7 +317,7 @@ const CandleChart: React.FC<CandleChartProps> = ({ data, width = 600, height = 3
     return () => {
       tooltip.remove();
     };
-  }, [data, width, height]);
+  }, [data, width, height, intervalFormat]);
 
   return (
     <>
